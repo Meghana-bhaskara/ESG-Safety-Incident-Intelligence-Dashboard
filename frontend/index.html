@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Greenko ESG / Safety Incident Intelligence Dashboard</title>
+  <style>
+    body { font-family: Inter, Arial, sans-serif; margin: 0; background: #f6f8fb; color: #172033; }
+    header { background: #12372a; color: white; padding: 28px 48px; }
+    header h1 { margin: 0 0 6px; font-size: 28px; }
+    header p { margin: 0; opacity: 0.9; font-size: 15px; }
+    main { max-width: 1040px; margin: 0 auto; padding: 28px 24px; }
+    section { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 6px 18px rgba(20,30,50,.05); }
+    h2 { color: #12372a; margin-top: 0; font-size: 20px; }
+    h3 { margin-top: 0; font-size: 16px; color: #1f2937; }
+    textarea { width: 100%; box-sizing: border-box; height: 95px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 14px; margin-bottom: 12px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: #12372a; color: white; border: none; padding: 11px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    button:hover { background: #1a4f3d; }
+    button.secondary { background: #e9f7ef; color: #14532d; border: 1px solid #bbf7d0; }
+    button.secondary:hover { background: #d1fae5; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .tag { display: inline-block; background: #e9f7ef; color: #14532d; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; text-transform: uppercase; }
+    .tag.high { background: #fee2e2; color: #991b1b; }
+    .tag.medium { background: #fef3c7; color: #92400e; }
+    .tag.low { background: #e0f2fe; color: #075985; }
+    .summary-box { background: #f0fdf4; border-left: 4px solid #12372a; padding: 14px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
+    ul { margin: 8px 0 0; padding-left: 20px; }
+    li { margin: 6px 0; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f8fafc; color: #374151; }
+    .metric-val { font-size: 22px; font-weight: 700; color: #12372a; }
+    .metric-lbl { font-size: 12px; color: #64748b; }
+    @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ESG / Safety Incident Intelligence Dashboard</h1>
+    <p>Automated Classification, Risk Tagging, Trend Extraction &amp; Preventive Action Engine</p>
+  </header>
+
+  <main>
+    <!-- Input Section -->
+    <section>
+      <h2>1. Analyze Safety / ESG Incident Narrative</h2>
+      <textarea id="incidentInput" placeholder="Enter an incident narrative (e.g., 'Hydraulic oil leak detected near turbine transformer bay during routine inspection; containment pads deployed.')"></textarea>
+      <div class="btn-row">
+        <button onclick="analyzeIncident()">Analyze Incident</button>
+        <button class="secondary" onclick="fillSample('Hydraulic oil seepage observed near wind turbine transformer bay; spill containment kit deployed immediately.')">Sample: Environment</button>
+        <button class="secondary" onclick="fillSample('Technician slipped on wet walkway at solar block without safety shoes; minor injury.')">Sample: Safety</button>
+        <button class="secondary" onclick="fillSample('Contractor compliance audit showed missing environmental permit log before maintenance activity.')">Sample: ESG Compliance</button>
+      </div>
+    </section>
+
+    <!-- AI Output Section -->
+    <section id="resultsSection" style="display: none;">
+      <h2>2. Incident Intelligence &amp; Recommendations</h2>
+      <div class="summary-box" id="resSummary"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Classification &amp; Risk Tagging</h3>
+          <p><strong>Category:</strong> <span id="resCategory" class="tag"></span> <small id="resCatConf"></small></p>
+          <p><strong>Severity:</strong> <span id="resSeverity" class="tag"></span> <small id="resSevConf"></small></p>
+        </div>
+        <div class="card">
+          <h3>Recommended Preventive Actions</h3>
+          <ul id="resActions"></ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Retrieved Historical Evidence (TF-IDF Cosine Similarity)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Historical Narrative</th>
+              <th>Category</th>
+              <th>Severity</th>
+              <th>Similarity</th>
+            </tr>
+          </thead>
+          <tbody id="evidenceTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Baseline Trends & Evaluation Metrics -->
+    <section>
+      <h2>3. Historical Trends &amp; Model Validation Metrics</h2>
+      <div class="grid-3" id="metricsGrid" style="margin-bottom: 16px;"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Category &amp; Severity Breakdown</h3>
+          <div id="distInfo" style="font-size: 14px; line-height: 1.6;"></div>
+        </div>
+        <div class="card">
+          <h3>Extracted Recurring Themes (Top TF-IDF Terms)</h3>
+          <div id="themesList"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function fillSample(text) {
+      document.getElementById('incidentInput').value = text;
+    }
+
+    function renderTrendsAndMetrics(trends, metrics) {
+      document.getElementById('metricsGrid').innerHTML = `
+        <div class="card"><div class="metric-val">${(metrics.category_accuracy * 100).toFixed(1)}%</div><div class="metric-lbl">Category CV Accuracy (F1: ${metrics.category_macro_f1})</div></div>
+        <div class="card"><div class="metric-val">${(metrics.severity_accuracy * 100).toFixed(1)}%</div><div class="metric-lbl">Severity CV Accuracy (F1: ${metrics.severity_macro_f1})</div></div>
+        <div class="card"><div class="metric-val">${trends.total_incidents} Logs</div><div class="metric-lbl">Indexed Baseline Records (${metrics.validation_strategy})</div></div>
+      `;
+
+      document.getElementById('distInfo').innerHTML = `
+        <strong>By Category:</strong> ${JSON.stringify(trends.category_distribution)}<br/>
+        <strong>By Severity:</strong> ${JSON.stringify(trends.severity_distribution)}
+      `;
+
+      document.getElementById('themesList').innerHTML = trends.recurring_themes
+        .map(t => `<span class="tag" style="margin:3px;">${t}</span>`)
+        .join('');
+    }
+
+    async function loadDashboardData() {
+      try {
+        const res = await fetch('/api/demo');
+        const data = await res.json();
+        if (data.trends && data.evaluation_metrics) {
+          renderTrendsAndMetrics(data.trends, data.evaluation_metrics);
+        }
+      } catch (e) {
+        console.error('Failed to load baseline dashboard data:', e);
+      }
+    }
+
+    async function analyzeIncident() {
+      const text = document.getElementById('incidentInput').value.trim();
+      if (!text) return alert('Please enter an incident narrative first.');
+
+      try {
+        const res = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+
+        document.getElementById('resSummary').innerText = data.summary;
+
+        const catEl = document.getElementById('resCategory');
+        catEl.innerText = data.predictions.category;
+        document.getElementById('resCatConf').innerText = `(Confidence: ${(data.predictions.category_confidence * 100).toFixed(1)}%)`;
+
+        const sevEl = document.getElementById('resSeverity');
+        sevEl.innerText = data.predictions.severity;
+        sevEl.className = 'tag ' + data.predictions.severity.toLowerCase();
+        document.getElementById('resSevConf').innerText = `(Confidence: ${(data.predictions.severity_confidence * 100).toFixed(1)}%)`;
+
+        document.getElementById('resActions').innerHTML = data.preventive_actions
+          .map(a => `<li>${a}</li>`)
+          .join('');
+
+        document.getElementById('evidenceTable').innerHTML = data.retrieval_evidence.length
+          ? data.retrieval_evidence.map(ev => `
+              <tr>
+                <td><strong>${ev.incident_id}</strong></td>
+                <td>${ev.narrative}</td>
+                <td>${ev.category}</td>
+                <td>${ev.severity}</td>
+                <td>${ev.similarity_score}</td>
+              </tr>`).join('')
+          : '<tr><td colspan="5">No closely matching historical incidents found.</td></tr>';
+
+        renderTrendsAndMetrics(data.trends, data.evaluation_metrics);
+        document.getElementById('resultsSection').style.display = 'block';
+      } catch (e) {
+        alert('Error running analysis. Check that the FastAPI server is running.');
+      }
+    }
+
+    window.onload = loadDashboardData;
+  </script>
+</body>
+</html>
