@@ -38,4 +38,5 @@ Then open `http://127.0.0.1:8000/` in your browser.
 
 ## 6. Dashboard Screenshots
 ![Dashboard Overview](screenshots/dashboard_home.png)
-![Incident Analysis Output](screenshots/incident_analysis.png)
+![Incident Analysis 1](screenshots/incident_analysis1.png)
+![Incident Analysis 2](screenshots/incident_analysis%202.png)
